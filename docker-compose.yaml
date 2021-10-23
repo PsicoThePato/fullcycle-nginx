@@ -20,27 +20,35 @@ services:
     restart: always
     tty: true
     volumes:
-      - ./db:/var/lib/mysql
+      - db-volume:/var/lib/mysql
     environment:
-        - MYSQL_DATABASe=nodedb
-        - MYSQL_ROOT_PASSWORD=root
+        - MYSQL_DATABASE=${DB_NAME}
+        - MYSQL_ROOT_PASSWORD=${DB_PASS}
     networks:
       - trident-net
 
   node:
+    volumes:
+      - /usr/src/app/node_modules
+      - ./app:/usr/src/app/
     build:
       context: .
       dockerfile: Dockerfile.node
     image: psicothepato/node
     container_name: node
     tty: true
-    volumes:
-      - ./app:/usr/src/app
     networks:
       - trident-net
     ports:
       - "3000:3000"
+    environment:
+        - MYSQL_DATABASE=${DB_NAME}
+        - MYSQL_ROOT_PASSWORD=${DB_PASS}
+        - MYSQL_ROOT_USER=${DB_USER}
+        - MYSQL_HOST=db
 
 networks:
   trident-net:
     driver: bridge
+volumes:
+  db-volume
