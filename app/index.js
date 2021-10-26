@@ -2,42 +2,30 @@ const express = require('express')
 const app = express()
 const port = 3000
 
+const db_funcs = require("./db_functions");
 
-
-const mysql = require('mysql');
-const con = mysql.createConnection({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_ROOT_USER,
-    password: process.env.MYSQL_ROOT_PASSWORD,
-    database: process.env.MYSQL_DATABASE
-});
-
-con.connect(function(err) {
-    if (err) throw err;
-    console.log("Connected!");
-    var sql = "CREATE TABLE people (id int not null auto_increment, name VARCHAR(255), primary key(id))";
-    con.query(sql, function (err, result) {
-      if (err) throw err;
-      console.log("Table created");
-    });
-});
-
-
-var faker = require('faker')
-
+const con = db_funcs.createSqlConnection()
+db_funcs.createTable(con)
 
 app.get('/', (req,res) =>
 {
-    var randomName = faker.name.findName();
-    insertQuery = `INSERT INTO people(name) values(${randomName})`
-    con.query(sql)
-    con.end()
-    res.send('<h1>Pai Careca</h1>')
+    db_funcs.insertRandomPerson(con);
     const getpeoplesql = 'SELECT name from people'
-
+    query_return = con.query(getpeoplesql, function(err, result, fields){
+        console.log(result)
+        let text = "<table border='1'>"
+        for (let obj in result){
+            text += "<tr><td>" + result[obj].name + "</td></tr>"
+        }
+        res.send('<h1>Full Cycle Rocks!</h1>' + `${text}`)
+    })
 })
 
-app.listen(port, ()=> 
+app.listen(port, () => 
 {
     console.log('Rodando')
+    console.log(process.env.MYSQL_ROOT_USER)
+    console.log(process.env.MYSQL_ROOT_PASSWORD)
+    console.log(process.env.MYSQL_DATABASE)
+    console.log(process.env.MYSQL_HOST)
 })
