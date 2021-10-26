@@ -37,6 +37,7 @@ services:
     image: psicothepato/node
     container_name: node
     tty: true
+    restart: always
     networks:
       - trident-net
     ports:
@@ -51,4 +52,4 @@ networks:
   trident-net:
     driver: bridge
 volumes:
-  db-volume
+  db-volume:
