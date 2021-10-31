@@ -2,25 +2,14 @@ version: '3'
 
 services:
 
-  nginx:
-    build:
-        context: .
-        dockerfile: Dockerfile.nginx
-    image: psicothepato/nginx
-    container_name: nginx
-    networks:
-      - trident-net
-    ports:
-      - "8080:80"
-
   db:
     image: mysql:5.7
     command: --innodb-use-native-aio=0
     container_name: db
     restart: always
     tty: true
-    volumes:
-      - db-volume:/var/lib/mysql
+    # volumes:
+    #   - ./db:/var/lib/mysql
     environment:
         - MYSQL_DATABASE=${DB_NAME}
         - MYSQL_ROOT_PASSWORD=${DB_PASS}
@@ -36,8 +25,8 @@ services:
       dockerfile: Dockerfile.node
     image: psicothepato/node
     container_name: node
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 40s node index.js
     tty: true
-    restart: always
     networks:
       - trident-net
     ports:
@@ -47,9 +36,28 @@ services:
         - MYSQL_ROOT_PASSWORD=${DB_PASS}
         - MYSQL_ROOT_USER=${DB_USER}
         - MYSQL_HOST=db
+    depends_on:
+      - db
+
+  nginx:
+    build:
+        context: .
+        dockerfile: Dockerfile.nginx
+    image: psicothepato/nginx
+    container_name: nginx
+    entrypoint: dockerize -wait tcp://node:3000 -timeout 40s
+    command: ["nginx", "-g", "daemon off;"]
+    networks:
+      - trident-net
+    ports:
+      - "8080:80"
+    depends_on:
+      - node
+
+
 
 networks:
   trident-net:
     driver: bridge
-volumes:
-  db-volume:
+# volumes:
+#   db-volume:
